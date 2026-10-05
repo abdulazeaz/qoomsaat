@@ -20,27 +20,27 @@ struct SettingsView: View {
 
     var body: some View {
         Form {
-            Section("Подключение") {
+            Section("Connection") {
                 TextField("Jira site", text: $site, prompt: Text("https://<DOMAIN>.atlassian.net"))
                 TextField("Email", text: $email)
-                SecureField("API-токен", text: $token,
-                            prompt: Text(hasToken ? "сохранён — оставьте пустым" : "вставьте токен"))
+                SecureField("API token", text: $token,
+                            prompt: Text(hasToken ? "Saved, leave empty to keep" : "Paste your token"))
                 HStack {
-                    Button("Сохранить", action: save).keyboardShortcut(.defaultAction)
-                    Button("Проверить подключение") {
-                        run { "Подключено: \(try await client().myself().displayName)" }
+                    Button("Save", action: save).keyboardShortcut(.defaultAction)
+                    Button("Test connection") {
+                        run { "Connected as \(try await client().myself().displayName)" }
                     }
                 }
             }
-            Section("Отчёт") {
-                Picker("Период", selection: $period) {
+            Section("Report") {
+                Picker("Period", selection: $period) {
                     ForEach(Period.allCases, id: \.self) { Text("\($0.title) (\($0.label))").tag($0) }
                 }
-                Button("Посчитать") {
+                Button("Calculate") {
                     run {
                         let r = try await client().summary(for: period.interval())
                         Cache.save(r, for: period)
-                        return "\(period.label): \(r.hoursText) ч, задач: \(r.issues)"
+                        return "\(period.label): \(r.hoursText), \(r.issues) issues"
                     }
                 }
             }
@@ -53,7 +53,7 @@ struct SettingsView: View {
         .disabled(busy)
     }
 
-    /// Использует значения из полей; пустое поле токена → токен из Keychain.
+    /// Uses the field values; an empty token field falls back to the Keychain token.
     private func client() throws -> JiraClient {
         let t = token.trimmingCharacters(in: .whitespacesAndNewlines)
         return try JiraClient(site: site, email: email.trimmingCharacters(in: .whitespaces),
@@ -67,12 +67,12 @@ struct SettingsView: View {
         let t = token.trimmingCharacters(in: .whitespacesAndNewlines)
         if !t.isEmpty {
             let s = Keychain.setToken(t)
-            guard s == errSecSuccess else { status = "Ошибка Keychain (\(s))"; return }
+            guard s == errSecSuccess else { status = "Keychain error (\(s))"; return }
             token = ""
             hasToken = true
         }
         WidgetCenter.shared.reloadAllTimelines()
-        status = "Сохранено"
+        status = "Saved"
     }
 
     private func run(_ op: @escaping () async throws -> String) {

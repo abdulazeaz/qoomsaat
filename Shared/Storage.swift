@@ -69,8 +69,10 @@ struct WorklogResult: Codable {
     let issues: Int
     let updated: Date
 
+    /// "7h 30m", "8h", "45m", "0m".
     var hoursText: String {
-        (Double(seconds) / 3600).formatted(.number.precision(.fractionLength(1)))
+        let m = (seconds + 30) / 60, h = m / 60, r = m % 60
+        return h == 0 ? "\(r)m" : r == 0 ? "\(h)h" : "\(h)h \(r)m"
     }
 }
 

@@ -5,10 +5,10 @@ enum Period: String, CaseIterable, Codable, Sendable {
 
     var title: String {
         switch self {
-        case .currentMonth: "Текущий месяц"
-        case .currentHalf: "Текущий полумесяц"
-        case .previousHalf: "Прошлый полумесяц"
-        case .previousMonth: "Прошлый месяц"
+        case .currentMonth: "Current month"
+        case .currentHalf: "Current semi-month"
+        case .previousHalf: "Previous semi-month"
+        case .previousMonth: "Previous month"
         }
     }
 
@@ -30,15 +30,15 @@ enum Period: String, CaseIterable, Codable, Sendable {
         }
     }
 
-    /// «Октябрь» для целого месяца, «1–15 окт.» для полумесяца.
+    /// "October" for a whole month, "Oct 1–15" for a semi-month.
     var label: String {
-        let i = interval(), cal = Calendar.current, ru = Locale(identifier: "ru_RU")
+        let i = interval(), cal = Calendar.current, en = Locale(identifier: "en_US")
         if self == .currentMonth || self == .previousMonth {
-            return i.start.formatted(.dateTime.month(.wide).locale(ru)).capitalized
+            return i.start.formatted(.dateTime.month(.wide).locale(en))
         }
         let last = cal.date(byAdding: .day, value: -1, to: i.end)!
-        return "\(cal.component(.day, from: i.start))–\(cal.component(.day, from: last)) "
-            + i.start.formatted(.dateTime.month(.abbreviated).locale(ru))
+        return i.start.formatted(.dateTime.month(.abbreviated).locale(en))
+            + " \(cal.component(.day, from: i.start))–\(cal.component(.day, from: last))"
     }
 }
 
@@ -47,12 +47,12 @@ enum JiraError: LocalizedError {
 
     var errorDescription: String? {
         switch self {
-        case .notConfigured: "Не настроено"
-        case .invalidSite: "Site должен быть https://<домен>.atlassian.net"
-        case .unauthorized: "Неверный email или токен"
-        case .network: "Нет сети"
-        case .http(let code): "Ошибка Jira (\(code))"
-        case .badResponse: "Неожиданный ответ Jira"
+        case .notConfigured: "Not set up"
+        case .invalidSite: "Site must be https://<domain>.atlassian.net"
+        case .unauthorized: "Wrong email or token"
+        case .network: "No connection"
+        case .http(let code): "Jira error (\(code))"
+        case .badResponse: "Unexpected Jira response"
         }
     }
 }

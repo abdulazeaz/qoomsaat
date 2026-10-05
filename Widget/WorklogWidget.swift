@@ -2,19 +2,28 @@ import AppIntents
 import SwiftUI
 import WidgetKit
 
-extension Period: AppEnum {
-    static var typeDisplayRepresentation: TypeDisplayRepresentation = "Период"
-    static var caseDisplayRepresentations: [Period: DisplayRepresentation] = [
-        .currentMonth: "Текущий месяц",
-        .currentHalf: "Текущий полумесяц",
-        .previousHalf: "Прошлый полумесяц",
-        .previousMonth: "Прошлый месяц",
+/// Periods offered in Edit Widget (the app's report window offers all of `Period`).
+enum WidgetPeriod: String, AppEnum {
+    case currentMonth, currentHalf
+
+    static var typeDisplayRepresentation: TypeDisplayRepresentation = "Period"
+    static var caseDisplayRepresentations: [WidgetPeriod: DisplayRepresentation] = [
+        .currentMonth: "Current month",
+        .currentHalf: "Current semi-month",
     ]
+
+    var period: Period { Period(rawValue: rawValue)! }
 }
 
 struct PeriodIntent: WidgetConfigurationIntent {
-    static var title: LocalizedStringResource = "Период"
-    @Parameter(title: "Период", default: .currentMonth) var period: Period
+    static var title: LocalizedStringResource = "Period"
+    @Parameter(title: "Period", default: .currentMonth) var period: WidgetPeriod
+}
+
+/// Refresh button: after perform() WidgetKit reloads the timeline right away.
+struct RefreshIntent: AppIntent {
+    static var title: LocalizedStringResource = "Refresh"
+    func perform() async throws -> some IntentResult { .result() }
 }
 
 struct Entry: TimelineEntry {
@@ -29,11 +38,12 @@ struct Provider: AppIntentTimelineProvider {
     func placeholder(in context: Context) -> Entry { Entry() }
 
     func snapshot(for config: PeriodIntent, in context: Context) async -> Entry {
-        context.isPreview ? Entry(period: config.period, result: Cache.load(config.period)) : await entry(config.period)
+        let p = config.period.period
+        return context.isPreview ? Entry(period: p, result: Cache.load(p)) : await entry(p)
     }
 
     func timeline(for config: PeriodIntent, in context: Context) async -> Timeline<Entry> {
-        Timeline(entries: [await entry(config.period)], policy: .after(.now.addingTimeInterval(15 * 60)))
+        Timeline(entries: [await entry(config.period.period)], policy: .after(.now.addingTimeInterval(15 * 60)))
     }
 
     private func entry(_ period: Period) async -> Entry {
@@ -50,39 +60,50 @@ struct Provider: AppIntentTimelineProvider {
 }
 
 struct WorklogView: View {
-    @Environment(\.widgetFamily) private var family
     let entry: Entry
+
+    // Fixed palette in both light and dark mode.
+    private let background = Color(red: 0xD8 / 255, green: 0x5A / 255, blue: 0x30 / 255)
+    private let header = Color(red: 0xFA / 255, green: 0xEC / 255, blue: 0xE7 / 255)
+    private let footer = Color(red: 0xF5 / 255, green: 0xC4 / 255, blue: 0xB3 / 255)
 
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
-            Text("Отработано · \(entry.period.label)")
-                .font(.caption).foregroundStyle(.secondary).lineLimit(1)
+            HStack {
+                Text(entry.period.label.uppercased()).lineLimit(1)
+                Spacer(minLength: 4)
+                Button(intent: RefreshIntent()) { Image(systemName: "arrow.clockwise") }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Refresh")
+            }
+            .font(.custom("DINAlternate-Bold", size: 13))
+            .foregroundStyle(header)
+
             Spacer(minLength: 0)
             if entry.notConfigured {
-                Text("Не настроено").font(.headline)
-                Text("Откройте приложение Jira Worklog").font(.caption2).foregroundStyle(.secondary)
+                Text("Not set up").font(.custom("DINCondensed-Bold", size: 30)).foregroundStyle(.white)
+                Text("Open Jira Worklog to sign in").font(.custom("DINAlternate-Bold", size: 11)).foregroundStyle(footer)
             } else {
-                HStack(alignment: .firstTextBaseline, spacing: 4) {
-                    Text(entry.result?.hoursText ?? "—")
-                        .font(.system(size: 42, weight: .bold, design: .rounded))
-                        .minimumScaleFactor(0.5).lineLimit(1)
-                    Text("ч").font(.title3).foregroundStyle(.secondary)
-                }
-                if family == .systemMedium, let r = entry.result {
-                    Text("Задач с ворклогами: \(r.issues)").font(.callout)
-                }
+                Text(entry.result?.hoursText ?? "—")
+                    .font(.custom("DINCondensed-Bold", size: 54))
+                    .foregroundStyle(.white)
+                    .minimumScaleFactor(0.5).lineLimit(1)
             }
             Spacer(minLength: 0)
-            if let error = entry.error {
-                Text(error).font(.caption2).foregroundStyle(.red).lineLimit(1)
+
+            Group {
+                if let error = entry.error {
+                    Label(error, systemImage: "exclamationmark.triangle").foregroundStyle(header)
+                } else if let r = entry.result {
+                    Text("Updated \(r.updated.formatted(date: .omitted, time: .shortened))")
+                }
             }
-            if let r = entry.result {
-                Text("Обновлено \(r.updated.formatted(date: .omitted, time: .shortened))")
-                    .font(.caption2).foregroundStyle(.secondary)
-            }
+            .font(.custom("DINAlternate-Bold", size: 11))
+            .foregroundStyle(footer)
+            .lineLimit(1)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-        .containerBackground(.fill.tertiary, for: .widget)
+        .containerBackground(background, for: .widget)
     }
 }
 
@@ -93,7 +114,7 @@ struct WorklogWidget: Widget {
             WorklogView(entry: $0)
         }
         .configurationDisplayName("Jira Worklog")
-        .description("Часы, списанные в Jira за выбранный период.")
-        .supportedFamilies([.systemSmall, .systemMedium])
+        .description("Hours logged in Jira for the current month or semi-month.")
+        .supportedFamilies([.systemSmall])
     }
 }

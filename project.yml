@@ -27,6 +27,8 @@ targets:
       path: App/Info.plist
       properties:
         CFBundleDisplayName: Jira Worklog
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        CFBundleShortVersionString: $(MARKETING_VERSION)
         LSApplicationCategoryType: public.app-category.productivity
         AppGroupID: $(TeamIdentifierPrefix)$(BUNDLE_ID_PREFIX).jiraworklog
     entitlements:
@@ -47,6 +49,8 @@ targets:
       path: Widget/Info.plist
       properties:
         CFBundleDisplayName: Jira Worklog
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        CFBundleShortVersionString: $(MARKETING_VERSION)
         NSExtension:
           NSExtensionPointIdentifier: com.apple.widgetkit-extension
         AppGroupID: $(TeamIdentifierPrefix)$(BUNDLE_ID_PREFIX).jiraworklog

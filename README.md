@@ -1,6 +1,6 @@
 # Jira Worklog — виджет для macOS
 
-Показывает часы, списанные в Jira Cloud за период: текущий месяц (по умолчанию), текущий/прошлый полумесяц (1–15, 16–конец), прошлый месяц. macOS 14+.
+Показывает часы, списанные в Jira Cloud (формат `7h 30m`), за текущий месяц или текущий полумесяц (1–15, 16–конец). В окне приложения — также прошлый месяц/полумесяц. macOS 14+.
 
 ## Требования
 - Xcode 15+ (`sudo xcode-select -s /Applications/Xcode.app`)
@@ -18,9 +18,10 @@
 3. Сборка и установка:
    ```
    xcodegen generate
-   xcodebuild -project JiraWorklog.xcodeproj -scheme JiraWorklog -derivedDataPath build -allowProvisioningUpdates build
+   xcodebuild -project JiraWorklog.xcodeproj -scheme JiraWorklog -derivedDataPath build -allowProvisioningUpdates CURRENT_PROJECT_VERSION=$(date +%s) build
    rm -rf /Applications/JiraWorklog.app && cp -R build/Build/Products/Debug/JiraWorklog.app /Applications/
    ```
+   `CURRENT_PROJECT_VERSION` меняется при каждой сборке — иначе macOS показывает закэшированную старую версию виджета.
    Или `open JiraWorklog.xcodeproj` → Run (⌘R).
 4. Provisioning profile не нужен (нет keychain-access-groups), поэтому сборка работает, пока действует сертификат Apple Development (~1 год).
 
@@ -31,7 +32,8 @@
 3. «Отчёт» → выбери период → «Посчитать» для разовой проверки.
 
 ## Виджет
-Правый клик по рабочему столу → «Изменить виджеты» → найди «Jira Worklog» → small или medium.
-Период: правый клик по виджету → «Изменить "Jira Worklog"». Можно поставить несколько виджетов с разными периодами.
+Правый клик по рабочему столу → «Изменить виджеты» → найди «Jira Worklog» (только small).
+Период (Current month / Current semi-month): правый клик по виджету → «Изменить». Кнопка ↻ обновляет сразу.
+Если после обновления виден старый вид — удали виджет и добавь заново.
 Обновление раз в 15 минут (macOS может откладывать). Чтобы виджет появился в галерее, приложение должно быть запущено хотя бы раз
 (при проблемах — скопируй `JiraWorklog.app` в `/Applications`).
