@@ -1,0 +1,14 @@
+# Xcode
+xcuserdata/
+DerivedData/
+build/
+*.xcodeproj/
+*.xcworkspace/
+*.moved-aside
+*.xccheckout
+*.xcscmblueprint
+.swiftpm/
+# macOS
+.DS_Store
+# Local signing overrides
+Local.xcconfig
