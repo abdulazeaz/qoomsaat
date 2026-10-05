@@ -1,4 +1,6 @@
-# Jira Worklog widget for macOS
+# Qoomsaat
+
+(*Qoomsaat - orig. qumsoat in Uzbek, meaning hourglass*)
 
 A small desktop widget that shows how many hours you've logged in Jira Cloud — for the current month or the current semi-month (1–15, 16–end). Format: `86h 30m`.
 
