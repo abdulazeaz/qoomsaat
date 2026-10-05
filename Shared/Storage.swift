@@ -4,7 +4,6 @@ import Security
 /// Идентификаторы берутся из Info.plist (подставляются из project.yml), чтобы не дублировать строки в коде.
 enum AppConfig {
     static let appGroup = Bundle.main.object(forInfoDictionaryKey: "AppGroupID") as? String ?? ""
-    static let keychainGroup = Bundle.main.object(forInfoDictionaryKey: "KeychainGroupID") as? String ?? ""
     static let defaults = UserDefaults(suiteName: appGroup) ?? .standard
 }
 
@@ -20,15 +19,15 @@ enum Settings {
     }
 }
 
-/// API-токен — только в Keychain (data protection keychain, общий access group).
+/// API-токен — только в Keychain (login keychain).
+/// Доступ виджету даётся через ACL элемента (trusted apps), а не через keychain-access-groups:
+/// тот entitlement требует provisioning profile, который у Personal Team живёт 7 дней.
 enum Keychain {
-    private static var base: [String: Any] {
-        [kSecClass as String: kSecClassGenericPassword,
-         kSecAttrService as String: "JiraAPIToken",
-         kSecAttrAccount as String: "default",
-         kSecAttrAccessGroup as String: AppConfig.keychainGroup,
-         kSecUseDataProtectionKeychain as String: true]
-    }
+    private static let base: [String: Any] = [
+        kSecClass as String: kSecClassGenericPassword,
+        kSecAttrService as String: "JiraAPIToken",
+        kSecAttrAccount as String: "default",
+    ]
 
     static func token() -> String? {
         var query = base
@@ -40,12 +39,27 @@ enum Keychain {
         return String(data: data, encoding: .utf8)
     }
 
+    /// Вызывается только из приложения: в ACL попадают само приложение и встроенный виджет.
     static func setToken(_ token: String) -> OSStatus {
         SecItemDelete(base as CFDictionary)
         var query = base
         query[kSecValueData as String] = Data(token.utf8)
-        query[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlock
+        query[kSecAttrLabel as String] = "Jira Worklog API token"
+        if let access = appAndWidgetAccess() { query[kSecAttrAccess as String] = access }
         return SecItemAdd(query as CFDictionary, nil)
+    }
+
+    // ponytail: SecAccess/SecTrustedApplication deprecated, но это единственный способ дать
+    // доступ к элементу второму бинарю без provisioning profile. Платный аккаунт → вернуть access group.
+    private static func appAndWidgetAccess() -> SecAccess? {
+        let widget = Bundle.main.builtInPlugInsURL!.appending(path: "JiraWorklogWidget.appex").path
+        var me: SecTrustedApplication?, ext: SecTrustedApplication?, access: SecAccess?
+        guard SecTrustedApplicationCreateFromPath(nil, &me) == errSecSuccess,
+              SecTrustedApplicationCreateFromPath(widget, &ext) == errSecSuccess,
+              let me, let ext,
+              SecAccessCreate("Jira Worklog API token" as CFString, [me, ext] as CFArray, &access) == errSecSuccess
+        else { return nil }
+        return access
     }
 }
 

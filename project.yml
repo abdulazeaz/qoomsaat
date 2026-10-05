@@ -29,14 +29,12 @@ targets:
         CFBundleDisplayName: Jira Worklog
         LSApplicationCategoryType: public.app-category.productivity
         AppGroupID: $(TeamIdentifierPrefix)$(BUNDLE_ID_PREFIX).jiraworklog
-        KeychainGroupID: $(AppIdentifierPrefix)$(BUNDLE_ID_PREFIX).jiraworklog
     entitlements:
       path: App/App.entitlements
       properties:
         com.apple.security.app-sandbox: true
         com.apple.security.network.client: true
         com.apple.security.application-groups: [$(TeamIdentifierPrefix)$(BUNDLE_ID_PREFIX).jiraworklog]
-        keychain-access-groups: [$(AppIdentifierPrefix)$(BUNDLE_ID_PREFIX).jiraworklog]
 
   JiraWorklogWidget:
     type: app-extension
@@ -52,11 +50,9 @@ targets:
         NSExtension:
           NSExtensionPointIdentifier: com.apple.widgetkit-extension
         AppGroupID: $(TeamIdentifierPrefix)$(BUNDLE_ID_PREFIX).jiraworklog
-        KeychainGroupID: $(AppIdentifierPrefix)$(BUNDLE_ID_PREFIX).jiraworklog
     entitlements:
       path: Widget/Widget.entitlements
       properties:
         com.apple.security.app-sandbox: true
         com.apple.security.network.client: true
         com.apple.security.application-groups: [$(TeamIdentifierPrefix)$(BUNDLE_ID_PREFIX).jiraworklog]
-        keychain-access-groups: [$(AppIdentifierPrefix)$(BUNDLE_ID_PREFIX).jiraworklog]

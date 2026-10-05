@@ -14,7 +14,7 @@
    BUNDLE_ID_PREFIX = <BUNDLE_ID_PREFIX>
    ```
    Team ID: `defaults read com.apple.dt.Xcode IDEProvisioningTeamByIdentifier | grep teamID`.
-   App Group и Keychain group выводятся автоматически: `<TEAM_ID>.<BUNDLE_ID_PREFIX>.jiraworklog`.
+   App Group выводится автоматически: `<TEAM_ID>.<BUNDLE_ID_PREFIX>.jiraworklog`.
 3. Сборка и установка:
    ```
    xcodegen generate
@@ -22,12 +22,12 @@
    rm -rf /Applications/JiraWorklog.app && cp -R build/Build/Products/Debug/JiraWorklog.app /Applications/
    ```
    Или `open JiraWorklog.xcodeproj` → Run (⌘R).
-4. Сборки под Personal Team живут ~7 дней — потом просто пересобери.
+4. Provisioning profile не нужен (нет keychain-access-groups), поэтому сборка работает, пока действует сертификат Apple Development (~1 год).
 
 ## Настройка
 1. Создай API-токен: https://id.atlassian.com/manage-profile/security/api-tokens
 2. В окне приложения: site (`https://<DOMAIN>.atlassian.net`), email, токен → «Сохранить» → «Проверить подключение».
-   Токен хранится только в Keychain; поле можно оставлять пустым — используется сохранённый.
+   Токен хранится только в login Keychain, доступ по ACL — приложение и его виджет; поле можно оставлять пустым — используется сохранённый.
 3. «Отчёт» → выбери период → «Посчитать» для разовой проверки.
 
 ## Виджет
