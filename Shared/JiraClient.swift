@@ -12,7 +12,7 @@ enum Period: String, CaseIterable, Codable, Sendable {
         }
     }
 
-    /// [start, end) в локальном часовом поясе. Полумесяцы: 1–15 и 16–конец.
+    /// [start, end) in the local time zone. Semi-months: 1–15 and 16–end.
     func interval(now: Date = .now, calendar cal: Calendar = .current) -> DateInterval {
         func month(_ d: Date) -> DateInterval { cal.dateInterval(of: .month, for: d)! }
         func halves(_ m: DateInterval) -> (DateInterval, DateInterval) {
@@ -179,7 +179,7 @@ struct JiraClient {
                 ("startedAfter", after), ("startedBefore", before),
             ])
             for w in page.worklogs where w.author?.accountId == me {
-                // Страховка от граничных ворклогов: проверяем started сами.
+                // Guard against boundary worklogs: check `started` ourselves.
                 if let d = Self.startedFormat.date(from: w.started), d < interval.start || d >= interval.end { continue }
                 sum += w.timeSpentSeconds
             }

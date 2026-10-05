@@ -1,13 +1,13 @@
 import Foundation
 import Security
 
-/// Идентификаторы берутся из Info.plist (подставляются из project.yml), чтобы не дублировать строки в коде.
+/// IDs come from Info.plist (filled in from project.yml), so the strings live in one place.
 enum AppConfig {
     static let appGroup = Bundle.main.object(forInfoDictionaryKey: "AppGroupID") as? String ?? ""
     static let defaults = UserDefaults(suiteName: appGroup) ?? .standard
 }
 
-/// Site и email — в shared UserDefaults. Токен сюда НЕ попадает.
+/// Site and email live in shared UserDefaults. The token never goes here.
 enum Settings {
     static var site: String {
         get { AppConfig.defaults.string(forKey: "site") ?? "" }
@@ -19,9 +19,9 @@ enum Settings {
     }
 }
 
-/// API-токен — только в Keychain (login keychain).
-/// Доступ виджету даётся через ACL элемента (trusted apps), а не через keychain-access-groups:
-/// тот entitlement требует provisioning profile, который у Personal Team живёт 7 дней.
+/// The API token lives only in the Keychain (login keychain).
+/// The widget gets access through the item ACL (trusted apps), not keychain-access-groups:
+/// that entitlement needs a provisioning profile, which expires after 7 days on a Personal Team.
 enum Keychain {
     private static let base: [String: Any] = [
         kSecClass as String: kSecClassGenericPassword,
@@ -39,7 +39,7 @@ enum Keychain {
         return String(data: data, encoding: .utf8)
     }
 
-    /// Вызывается только из приложения: в ACL попадают само приложение и встроенный виджет.
+    /// Called only from the app: the ACL lists the app itself and its embedded widget.
     static func setToken(_ token: String) -> OSStatus {
         SecItemDelete(base as CFDictionary)
         var query = base
@@ -49,8 +49,8 @@ enum Keychain {
         return SecItemAdd(query as CFDictionary, nil)
     }
 
-    // ponytail: SecAccess/SecTrustedApplication deprecated, но это единственный способ дать
-    // доступ к элементу второму бинарю без provisioning profile. Платный аккаунт → вернуть access group.
+    // ponytail: SecAccess/SecTrustedApplication are deprecated, but they are the only way to give
+    // a second binary access without a provisioning profile. With a paid account, switch back to an access group.
     private static func appAndWidgetAccess() -> SecAccess? {
         let widget = Bundle.main.builtInPlugInsURL!.appending(path: "JiraWorklogWidget.appex").path
         var me: SecTrustedApplication?, ext: SecTrustedApplication?, access: SecAccess?
@@ -64,7 +64,7 @@ enum Keychain {
 }
 
 struct WorklogResult: Codable {
-    let start: Date      // начало периода — чтобы не показать кэш прошлого полумесяца как текущий
+    let start: Date      // period start, so a cached previous semi-month is never shown as the current one
     let seconds: Int
     let issues: Int
     let updated: Date
@@ -76,7 +76,7 @@ struct WorklogResult: Codable {
     }
 }
 
-/// Последнее успешное значение по каждому периоду.
+/// Last successful value for each period.
 enum Cache {
     static func save(_ result: WorklogResult, for period: Period) {
         AppConfig.defaults.set(try? JSONEncoder().encode(result), forKey: "cache.\(period.rawValue)")

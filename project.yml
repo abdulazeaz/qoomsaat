@@ -2,7 +2,7 @@ name: JiraWorklog
 options:
   deploymentTarget:
     macOS: "14.0"
-configFiles:                        # Team и BUNDLE_ID_PREFIX — в Config.xcconfig / Local.xcconfig
+configFiles:                        # Team and BUNDLE_ID_PREFIX: see Config.xcconfig / Local.xcconfig
   Debug: Config.xcconfig
   Release: Config.xcconfig
 settings:

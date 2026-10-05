@@ -1,4 +1,4 @@
-// Значения по умолчанию (в репозитории). Свои — в Local.xcconfig (gitignored):
+// Defaults (committed). Put your own values in Local.xcconfig (git-ignored):
 //   DEVELOPMENT_TEAM = <TEAM_ID>
 //   BUNDLE_ID_PREFIX = <BUNDLE_ID_PREFIX>
 DEVELOPMENT_TEAM =
